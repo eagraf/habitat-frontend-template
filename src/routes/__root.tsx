@@ -34,6 +34,9 @@ export const Route = createRootRoute({
           <Link to='/table' className='[&.active]:text-orange-500'>
             Table
           </Link>
+          <Link to='/notes' className='[&.active]:text-orange-500'>
+            Notes
+          </Link>
         </div>
         <QueryClientProvider client={queryClient}>
           <div className='mt-32'>
