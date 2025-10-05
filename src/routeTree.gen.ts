@@ -16,6 +16,7 @@ import { Route as TableRouteImport } from './routes/table'
 const QueryLazyRouteImport = createFileRoute('/query')()
 const NotesLazyRouteImport = createFileRoute('/notes')()
 const FormLazyRouteImport = createFileRoute('/form')()
+const DataLazyRouteImport = createFileRoute('/data')()
 const IndexLazyRouteImport = createFileRoute('/')()
 
 const QueryLazyRoute = QueryLazyRouteImport.update({
@@ -33,6 +34,11 @@ const FormLazyRoute = FormLazyRouteImport.update({
   path: '/form',
   getParentRoute: () => rootRouteImport,
 } as any).lazy(() => import('./routes/form.lazy').then((d) => d.Route))
+const DataLazyRoute = DataLazyRouteImport.update({
+  id: '/data',
+  path: '/data',
+  getParentRoute: () => rootRouteImport,
+} as any).lazy(() => import('./routes/data.lazy').then((d) => d.Route))
 const TableRoute = TableRouteImport.update({
   id: '/table',
   path: '/table',
@@ -47,6 +53,7 @@ const IndexLazyRoute = IndexLazyRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexLazyRoute
   '/table': typeof TableRoute
+  '/data': typeof DataLazyRoute
   '/form': typeof FormLazyRoute
   '/notes': typeof NotesLazyRoute
   '/query': typeof QueryLazyRoute
@@ -54,6 +61,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexLazyRoute
   '/table': typeof TableRoute
+  '/data': typeof DataLazyRoute
   '/form': typeof FormLazyRoute
   '/notes': typeof NotesLazyRoute
   '/query': typeof QueryLazyRoute
@@ -62,21 +70,23 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexLazyRoute
   '/table': typeof TableRoute
+  '/data': typeof DataLazyRoute
   '/form': typeof FormLazyRoute
   '/notes': typeof NotesLazyRoute
   '/query': typeof QueryLazyRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/table' | '/form' | '/notes' | '/query'
+  fullPaths: '/' | '/table' | '/data' | '/form' | '/notes' | '/query'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/table' | '/form' | '/notes' | '/query'
-  id: '__root__' | '/' | '/table' | '/form' | '/notes' | '/query'
+  to: '/' | '/table' | '/data' | '/form' | '/notes' | '/query'
+  id: '__root__' | '/' | '/table' | '/data' | '/form' | '/notes' | '/query'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexLazyRoute: typeof IndexLazyRoute
   TableRoute: typeof TableRoute
+  DataLazyRoute: typeof DataLazyRoute
   FormLazyRoute: typeof FormLazyRoute
   NotesLazyRoute: typeof NotesLazyRoute
   QueryLazyRoute: typeof QueryLazyRoute
@@ -105,6 +115,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FormLazyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/data': {
+      id: '/data'
+      path: '/data'
+      fullPath: '/data'
+      preLoaderRoute: typeof DataLazyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/table': {
       id: '/table'
       path: '/table'
@@ -125,6 +142,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexLazyRoute: IndexLazyRoute,
   TableRoute: TableRoute,
+  DataLazyRoute: DataLazyRoute,
   FormLazyRoute: FormLazyRoute,
   NotesLazyRoute: NotesLazyRoute,
   QueryLazyRoute: QueryLazyRoute,
