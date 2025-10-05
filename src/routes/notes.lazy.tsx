@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
-import { listPrivateNotes, putPrivateNoteRecord } from '../api/notes_client'
+import { listPrivateNotes, putPrivateNoteRecord, type NoteRecord } from '../api/notes_client'
 import type { ListRecordsResponse } from '../sdk/atproto'
 
 export const Route = createLazyFileRoute('/notes')({
@@ -145,7 +145,7 @@ function Notes() {
 
             {notesData.records && notesData.records.length > 0 ? (
               <div className="grid gap-4">
-                {notesData.records.map((record: ListRecordsResponse['records'][number]) => (
+                {notesData.records.map((record: ListRecordsResponse<NoteRecord>['records'][number]) => (
                   <div
                     key={record.uri}
                     className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"

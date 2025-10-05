@@ -3,11 +3,11 @@ import type { ComAtprotoRepoCreateRecord, ComAtprotoRepoGetRecord, ComAtprotoRep
 import Cookies from 'js-cookie';
 
 // Types for Habitat private record operations
-export interface PutRecordRequest {
+export interface PutRecordRequest<T = Record<string, unknown>> {
     collection: string;
     repo: string;
     rkey?: string;
-    record: Record<string, unknown>;
+    record: T;
 }
 
 export interface GetRecordQueryParams {
@@ -21,10 +21,10 @@ export interface PutRecordResponse {
     cid: string;
 }
 
-export interface GetRecordResponse {
+export interface GetRecordResponse<T = Record<string, unknown>> {
     uri: string;
     cid: string;
-    value: Record<string, unknown>;
+    value: T;
 }
 
 export interface ListRecordsQueryParams {
@@ -34,11 +34,11 @@ export interface ListRecordsQueryParams {
     cursor?: string;
 }
 
-export interface ListRecordsResponse {
+export interface ListRecordsResponse<T = Record<string, unknown>> {
     records: Array<{
         uri: string;
         cid: string;
-        value: Record<string, unknown>;
+        value: T;
     }>;
     cursor?: string;
 }
@@ -89,41 +89,42 @@ export class HabitatClient {
         this.agent = agent;
     }
 
-    createRecord(
-        data: Omit<ComAtprotoRepoCreateRecord.InputSchema, 'repo'>,
+    createRecord<T = Record<string, unknown>>(
+        data: Omit<ComAtprotoRepoCreateRecord.InputSchema, 'repo'> & { record: T },
         opts?: ComAtprotoRepoCreateRecord.CallOptions,
     ): Promise<ComAtprotoRepoCreateRecord.Response> {
         return this.agent.com.atproto.repo.createRecord({
             ...data,
             repo: this.did,
+            record: data.record as Record<string, unknown>,
         }, opts);
     }
 
-    getRecord(
+    getRecord<T = Record<string, unknown>>(
         params: Omit<ComAtprotoRepoGetRecord.QueryParams, 'repo'>,
         opts?: ComAtprotoRepoGetRecord.CallOptions,
-    ): Promise<ComAtprotoRepoGetRecord.Response> {
+    ): Promise<ComAtprotoRepoGetRecord.Response & { data: { value: T } }> {
         return this.agent.com.atproto.repo.getRecord({
             ...params,
             repo: this.did,
-        }, opts);
+        }, opts) as Promise<ComAtprotoRepoGetRecord.Response & { data: { value: T } }>;
     }
 
-    listRecords(
+    listRecords<T = Record<string, unknown>>(
         params: Omit<ComAtprotoRepoListRecords.QueryParams, 'repo'>,
         opts?: ComAtprotoRepoListRecords.CallOptions,
-    ): Promise<ComAtprotoRepoListRecords.Response> {
+    ): Promise<ComAtprotoRepoListRecords.Response & { data: { records: Array<{ uri: string; cid: string; value: T }> } }> {
         return this.agent.com.atproto.repo.listRecords({
             ...params,
             repo: this.did,
-        }, opts);
+        }, opts) as Promise<ComAtprotoRepoListRecords.Response & { data: { records: Array<{ uri: string; cid: string; value: T }> } }>;
     }
 
-    async putPrivateRecord(
-        data: Omit<PutRecordRequest, 'repo'>,
+    async putPrivateRecord<T = Record<string, unknown>>(
+        data: Omit<PutRecordRequest<T>, 'repo'>,
         opts?: RequestInit,
     ): Promise<PutRecordResponse> {
-        const requestBody: PutRecordRequest = {
+        const requestBody: PutRecordRequest<T> = {
             ...data,
             repo: this.did,
         };
@@ -144,10 +145,10 @@ export class HabitatClient {
         return response.json();
     }
 
-    async getPrivateRecord(
+    async getPrivateRecord<T = Record<string, unknown>>(
         params: Omit<GetRecordQueryParams, 'repo'>,
         opts?: RequestInit,
-    ): Promise<GetRecordResponse> {
+    ): Promise<GetRecordResponse<T>> {
         const queryParams = new URLSearchParams({
             ...params,
             repo: this.did,
@@ -165,10 +166,10 @@ export class HabitatClient {
         return response.json();
     }
 
-    async listPrivateRecords(
+    async listPrivateRecords<T = Record<string, unknown>>(
         params: Omit<ListRecordsQueryParams, 'repo'>,
         opts?: RequestInit,
-    ): Promise<ListRecordsResponse> {
+    ): Promise<ListRecordsResponse<T>> {
         const queryParams = new URLSearchParams();
         queryParams.set('collection', params.collection);
         queryParams.set('repo', this.did);
