@@ -2,11 +2,10 @@ import { useQuery } from '@tanstack/react-query'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
 import { HabitatClient, getUserDid, getDefaultAgent } from '../sdk/atproto'
-
-const defaultLexicons = ['dev.eagraf.note'];
+import { DATA_ROUTE_CONFIG } from './data.config'
 
 export const Route = createLazyFileRoute('/data')({
-  component: () => <DataDebugger lexicons={defaultLexicons} />,
+  component: () => <DataDebugger lexicons={[...DATA_ROUTE_CONFIG.lexicons]} />,
 })
 
 interface DataDebuggerProps {
