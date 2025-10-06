@@ -2,21 +2,8 @@ import { Agent } from '@atproto/api';
 import type { ComAtprotoRepoCreateRecord, ComAtprotoRepoGetRecord, ComAtprotoRepoListRecords } from '@atproto/api';
 import Cookies from 'js-cookie';
 
-// Types for Habitat private record operations
-export interface PutRecordRequest<T = Record<string, unknown>> {
-    collection: string;
-    repo: string;
-    rkey?: string;
-    record: T;
-}
-
-export interface GetRecordQueryParams {
-    collection: string;
-    rkey: string;
-    repo: string;
-}
-
-export interface PutRecordResponse {
+// Response types for HabitatClient
+export interface CreateRecordResponse {
     uri: string;
     cid: string;
 }
@@ -27,13 +14,6 @@ export interface GetRecordResponse<T = Record<string, unknown>> {
     value: T;
 }
 
-export interface ListRecordsQueryParams {
-    collection: string;
-    repo: string;
-    limit?: number;
-    cursor?: string;
-}
-
 export interface ListRecordsResponse<T = Record<string, unknown>> {
     records: Array<{
         uri: string;
@@ -41,6 +21,15 @@ export interface ListRecordsResponse<T = Record<string, unknown>> {
         value: T;
     }>;
     cursor?: string;
+}
+
+// Internal types for Habitat private record operations
+// These include 'repo' since they're used in the wire protocol
+interface PutRecordRequest<T = Record<string, unknown>> {
+    collection: string;
+    repo: string;
+    rkey?: string;
+    record: T;
 }
 
 // HabitatAgentSession implements the Atproto Session interface.
@@ -90,14 +79,18 @@ export class HabitatClient {
     }
 
     async createRecord<T = Record<string, unknown>>(
-        data: Omit<ComAtprotoRepoCreateRecord.InputSchema, 'repo'> & { record: T },
+        collection: string,
+        record: T,
+        rkey?: string,
         opts?: ComAtprotoRepoCreateRecord.CallOptions,
-    ): Promise<PutRecordResponse> {
+    ): Promise<CreateRecordResponse> {
         const response = await this.agent.com.atproto.repo.createRecord({
-            ...data,
             repo: this.did,
-            record: data.record as Record<string, unknown>,
+            collection,
+            record: record as Record<string, unknown>,
+            rkey,
         }, opts);
+        
         return {
             uri: response.data.uri,
             cid: response.data.cid,
@@ -105,13 +98,18 @@ export class HabitatClient {
     }
 
     async getRecord<T = Record<string, unknown>>(
-        params: Omit<ComAtprotoRepoGetRecord.QueryParams, 'repo'>,
+        collection: string,
+        rkey: string,
+        cid?: string,
         opts?: ComAtprotoRepoGetRecord.CallOptions,
     ): Promise<GetRecordResponse<T>> {
         const response = await this.agent.com.atproto.repo.getRecord({
-            ...params,
             repo: this.did,
+            collection,
+            rkey,
+            cid,
         }, opts);
+        
         return {
             uri: response.data.uri,
             cid: response.data.cid,
@@ -120,13 +118,18 @@ export class HabitatClient {
     }
 
     async listRecords<T = Record<string, unknown>>(
-        params: Omit<ComAtprotoRepoListRecords.QueryParams, 'repo'>,
+        collection: string,
+        limit?: number,
+        cursor?: string,
         opts?: ComAtprotoRepoListRecords.CallOptions,
     ): Promise<ListRecordsResponse<T>> {
         const response = await this.agent.com.atproto.repo.listRecords({
-            ...params,
             repo: this.did,
+            collection,
+            limit,
+            cursor,
         }, opts);
+        
         return {
             records: response.data.records.map(record => ({
                 uri: record.uri,
@@ -138,12 +141,16 @@ export class HabitatClient {
     }
 
     async putPrivateRecord<T = Record<string, unknown>>(
-        data: Omit<PutRecordRequest<T>, 'repo'>,
+        collection: string,
+        record: T,
+        rkey?: string,
         opts?: RequestInit,
-    ): Promise<PutRecordResponse> {
+    ): Promise<CreateRecordResponse> {
         const requestBody: PutRecordRequest<T> = {
-            ...data,
             repo: this.did,
+            collection,
+            rkey,
+            record,
         };
 
         const response = await this.agent.fetchHandler('/xrpc/com.habitat.putRecord', {
@@ -163,13 +170,20 @@ export class HabitatClient {
     }
 
     async getPrivateRecord<T = Record<string, unknown>>(
-        params: Omit<GetRecordQueryParams, 'repo'>,
+        collection: string,
+        rkey: string,
+        cid?: string,
         opts?: RequestInit,
     ): Promise<GetRecordResponse<T>> {
         const queryParams = new URLSearchParams({
-            ...params,
             repo: this.did,
+            collection,
+            rkey,
         });
+
+        if (cid) {
+            queryParams.set('cid', cid);
+        }
 
         const response = await this.agent.fetchHandler(`/xrpc/com.habitat.getRecord?${queryParams}`, {
             method: 'GET',
@@ -184,18 +198,20 @@ export class HabitatClient {
     }
 
     async listPrivateRecords<T = Record<string, unknown>>(
-        params: Omit<ListRecordsQueryParams, 'repo'>,
+        collection: string,
+        limit?: number,
+        cursor?: string,
         opts?: RequestInit,
     ): Promise<ListRecordsResponse<T>> {
         const queryParams = new URLSearchParams();
-        queryParams.set('collection', params.collection);
+        queryParams.set('collection', collection);
         queryParams.set('repo', this.did);
         
-        if (params.limit !== undefined) {
-            queryParams.set('limit', params.limit.toString());
+        if (limit !== undefined) {
+            queryParams.set('limit', limit.toString());
         }
-        if (params.cursor) {
-            queryParams.set('cursor', params.cursor);
+        if (cursor) {
+            queryParams.set('cursor', cursor);
         }
 
         const response = await this.agent.fetchHandler(`/xrpc/com.habitat.listRecords?${queryParams}`, {

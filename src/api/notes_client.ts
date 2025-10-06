@@ -1,4 +1,5 @@
 import { HabitatClient, getUserDid, getDefaultAgent } from '../sdk/atproto';
+import type { CreateRecordResponse, GetRecordResponse, ListRecordsResponse } from '../sdk/atproto';
 
 // Note record type
 export interface NoteRecord {
@@ -6,53 +7,45 @@ export interface NoteRecord {
     createdAt?: string;
 }
 
-export const createNoteRecord = async (note: string) => {
+export const createNoteRecord = async (note: string): Promise<CreateRecordResponse> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
-    const response = await client.createRecord<NoteRecord>({
-        collection: 'dev.eagraf.note',
-        record: {
-            note,
-        },
-    });
+    const response = await client.createRecord<NoteRecord>(
+        'dev.eagraf.note',
+        { note }
+    );
     return response;
 };
 
-export const listNotes = async () => {
+export const listNotes = async (): Promise<ListRecordsResponse<NoteRecord>> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
-    const response = await client.listRecords<NoteRecord>({
-        collection: 'dev.eagraf.note',
-    });
+    const response = await client.listRecords<NoteRecord>('dev.eagraf.note');
     return response;
 };
 
 
 // Convenience functions for private record operations
-export const putPrivateNoteRecord = async (note: string, rkey?: string) => {
+export const putPrivateNoteRecord = async (note: string, rkey?: string): Promise<CreateRecordResponse> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
-    const response = await client.putPrivateRecord<NoteRecord>({
-        collection: 'dev.eagraf.note',
-        rkey,
-        record: {
-            note,
-        },
-    });
+    const response = await client.putPrivateRecord<NoteRecord>(
+        'dev.eagraf.note',
+        { note },
+        rkey
+    );
     return response;
 };
 
-export const getPrivateNoteRecord = async (rkey: string) => {
+export const getPrivateNoteRecord = async (rkey: string): Promise<GetRecordResponse<NoteRecord>> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
-    const response = await client.getPrivateRecord<NoteRecord>({
-        collection: 'dev.eagraf.note',
-        rkey,
-    });
+    const response = await client.getPrivateRecord<NoteRecord>(
+        'dev.eagraf.note',
+        rkey
+    );
     return response;
 };
 
-export const listPrivateNotes = async () => {
+export const listPrivateNotes = async (): Promise<ListRecordsResponse<NoteRecord>> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
-    const response = await client.listPrivateRecords<NoteRecord>({
-        collection: 'dev.eagraf.note',
-    });
+    const response = await client.listPrivateRecords<NoteRecord>('dev.eagraf.note');
     console.log(response);
     return response;
 };

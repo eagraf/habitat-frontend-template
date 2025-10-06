@@ -57,13 +57,9 @@ function DataDebugger({ lexicons }: DataDebuggerProps) {
       const client = new HabitatClient(getUserDid(), getDefaultAgent())
       
       if (isPrivate) {
-        return await client.listPrivateRecords({
-          collection: selectedLexicon,
-        })
+        return await client.listPrivateRecords(selectedLexicon)
       } else {
-        return await client.listRecords({
-          collection: selectedLexicon,
-        })
+        return await client.listRecords(selectedLexicon)
       }
     },
     enabled: !!selectedLexicon,
