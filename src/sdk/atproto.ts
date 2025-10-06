@@ -23,7 +23,7 @@ export interface PutRecordResponse {
 
 export interface GetRecordResponse<T = Record<string, unknown>> {
     uri: string;
-    cid: string;
+    cid?: string;
     value: T;
 }
 
@@ -89,35 +89,52 @@ export class HabitatClient {
         this.agent = agent;
     }
 
-    createRecord<T = Record<string, unknown>>(
+    async createRecord<T = Record<string, unknown>>(
         data: Omit<ComAtprotoRepoCreateRecord.InputSchema, 'repo'> & { record: T },
         opts?: ComAtprotoRepoCreateRecord.CallOptions,
-    ): Promise<ComAtprotoRepoCreateRecord.Response> {
-        return this.agent.com.atproto.repo.createRecord({
+    ): Promise<PutRecordResponse> {
+        const response = await this.agent.com.atproto.repo.createRecord({
             ...data,
             repo: this.did,
             record: data.record as Record<string, unknown>,
         }, opts);
+        return {
+            uri: response.data.uri,
+            cid: response.data.cid,
+        };
     }
 
-    getRecord<T = Record<string, unknown>>(
+    async getRecord<T = Record<string, unknown>>(
         params: Omit<ComAtprotoRepoGetRecord.QueryParams, 'repo'>,
         opts?: ComAtprotoRepoGetRecord.CallOptions,
-    ): Promise<ComAtprotoRepoGetRecord.Response & { data: { value: T } }> {
-        return this.agent.com.atproto.repo.getRecord({
+    ): Promise<GetRecordResponse<T>> {
+        const response = await this.agent.com.atproto.repo.getRecord({
             ...params,
             repo: this.did,
-        }, opts) as Promise<ComAtprotoRepoGetRecord.Response & { data: { value: T } }>;
+        }, opts);
+        return {
+            uri: response.data.uri,
+            cid: response.data.cid,
+            value: response.data.value as T,
+        };
     }
 
-    listRecords<T = Record<string, unknown>>(
+    async listRecords<T = Record<string, unknown>>(
         params: Omit<ComAtprotoRepoListRecords.QueryParams, 'repo'>,
         opts?: ComAtprotoRepoListRecords.CallOptions,
-    ): Promise<ComAtprotoRepoListRecords.Response & { data: { records: Array<{ uri: string; cid: string; value: T }> } }> {
-        return this.agent.com.atproto.repo.listRecords({
+    ): Promise<ListRecordsResponse<T>> {
+        const response = await this.agent.com.atproto.repo.listRecords({
             ...params,
             repo: this.did,
-        }, opts) as Promise<ComAtprotoRepoListRecords.Response & { data: { records: Array<{ uri: string; cid: string; value: T }> } }>;
+        }, opts);
+        return {
+            records: response.data.records.map(record => ({
+                uri: record.uri,
+                cid: record.cid,
+                value: record.value as T,
+            })),
+            cursor: response.data.cursor,
+        };
     }
 
     async putPrivateRecord<T = Record<string, unknown>>(

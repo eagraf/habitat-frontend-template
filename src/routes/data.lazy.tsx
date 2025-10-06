@@ -74,7 +74,7 @@ function DataDebugger({ lexicons }: DataDebuggerProps) {
   const filteredRecords = useMemo(() => {
     if (!data) return []
     
-    const records = 'data' in data ? data.data.records : data.records
+    const records = data.records
     
     if (Object.keys(parsedFilters).length === 0) {
       return records
@@ -224,7 +224,7 @@ function DataDebugger({ lexicons }: DataDebuggerProps) {
           <>
             <div className="flex justify-between items-center mb-4">
               <p className="text-gray-600 dark:text-gray-400">
-                {filteredRecords.length} of {('data' in data ? data.data.records : data.records)?.length || 0} record(s)
+                {filteredRecords.length} of {data.records?.length || 0} record(s)
                 {Object.keys(parsedFilters).length > 0 && ' (filtered)'}
               </p>
               <button

@@ -14,7 +14,7 @@ export const createNoteRecord = async (note: string) => {
             note,
         },
     });
-    return response.data;
+    return response;
 };
 
 export const listNotes = async () => {
@@ -22,7 +22,7 @@ export const listNotes = async () => {
     const response = await client.listRecords<NoteRecord>({
         collection: 'dev.eagraf.note',
     });
-    return response.data;
+    return response;
 };
 
 
