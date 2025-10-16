@@ -101,10 +101,11 @@ export class HabitatClient {
         collection: string,
         rkey: string,
         cid?: string,
+        repo?: string,
         opts?: ComAtprotoRepoGetRecord.CallOptions,
     ): Promise<GetRecordResponse<T>> {
         const response = await this.agent.com.atproto.repo.getRecord({
-            repo: this.did,
+            repo: repo ?? this.did,
             collection,
             rkey,
             cid,
@@ -121,10 +122,11 @@ export class HabitatClient {
         collection: string,
         limit?: number,
         cursor?: string,
+        repo?: string,
         opts?: ComAtprotoRepoListRecords.CallOptions,
     ): Promise<ListRecordsResponse<T>> {
         const response = await this.agent.com.atproto.repo.listRecords({
-            repo: this.did,
+            repo: repo ?? this.did,
             collection,
             limit,
             cursor,
@@ -173,10 +175,11 @@ export class HabitatClient {
         collection: string,
         rkey: string,
         cid?: string,
+        repo?: string,
         opts?: RequestInit,
     ): Promise<GetRecordResponse<T>> {
         const queryParams = new URLSearchParams({
-            repo: this.did,
+            repo: repo ?? this.did,
             collection,
             rkey,
         });
@@ -201,11 +204,12 @@ export class HabitatClient {
         collection: string,
         limit?: number,
         cursor?: string,
+        repo?: string,
         opts?: RequestInit,
     ): Promise<ListRecordsResponse<T>> {
         const queryParams = new URLSearchParams();
         queryParams.set('collection', collection);
-        queryParams.set('repo', this.did);
+        queryParams.set('repo', repo ?? this.did);
         
         if (limit !== undefined) {
             queryParams.set('limit', limit.toString());

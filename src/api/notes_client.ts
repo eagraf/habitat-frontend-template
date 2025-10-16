@@ -16,9 +16,9 @@ export const createNoteRecord = async (note: string): Promise<CreateRecordRespon
     return response;
 };
 
-export const listNotes = async (): Promise<ListRecordsResponse<NoteRecord>> => {
+export const listNotes = async (repo?: string): Promise<ListRecordsResponse<NoteRecord>> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
-    const response = await client.listRecords<NoteRecord>('dev.eagraf.note');
+    const response = await client.listRecords<NoteRecord>('dev.eagraf.note', undefined, undefined, repo);
     return response;
 };
 
@@ -34,18 +34,20 @@ export const putPrivateNoteRecord = async (note: string, rkey?: string): Promise
     return response;
 };
 
-export const getPrivateNoteRecord = async (rkey: string): Promise<GetRecordResponse<NoteRecord>> => {
+export const getPrivateNoteRecord = async (rkey: string, repo?: string): Promise<GetRecordResponse<NoteRecord>> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
     const response = await client.getPrivateRecord<NoteRecord>(
         'dev.eagraf.note',
-        rkey
+        rkey,
+        undefined,
+        repo
     );
     return response;
 };
 
-export const listPrivateNotes = async (): Promise<ListRecordsResponse<NoteRecord>> => {
+export const listPrivateNotes = async (repo?: string): Promise<ListRecordsResponse<NoteRecord>> => {
     const client = new HabitatClient(getUserDid(), getDefaultAgent());
-    const response = await client.listPrivateRecords<NoteRecord>('dev.eagraf.note');
+    const response = await client.listPrivateRecords<NoteRecord>('dev.eagraf.note', undefined, undefined, repo);
     console.log(response);
     return response;
 };
