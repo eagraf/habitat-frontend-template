@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import { useState, useMemo } from 'react'
-import { HabitatClient, getUserDid, getDefaultAgent } from '../sdk/atproto'
+import { useHabitatClient } from '../sdk/HabitatClientProvider'
 import { DATA_ROUTE_CONFIG } from './data.config'
 
 export const Route = createLazyFileRoute('/data')({
@@ -17,8 +17,10 @@ interface FilterCriteria {
 }
 
 function DataDebugger({ lexicons }: DataDebuggerProps) {
+  const { client } = useHabitatClient()
   const [selectedLexicon, setSelectedLexicon] = useState<string>('')
   const [isPrivate, setIsPrivate] = useState(false)
+  const [repoDid, setRepoDid] = useState<string>('')
   const [filterText, setFilterText] = useState('')
   const [parsedFilters, setParsedFilters] = useState<FilterCriteria>({})
 
@@ -46,20 +48,21 @@ function DataDebugger({ lexicons }: DataDebuggerProps) {
     setParsedFilters(parseFilters(text))
   }
 
-  // Fetch data based on selected lexicon and privacy setting
+  // Fetch data based on selected lexicon, privacy setting, and optional repo DID
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['data-debugger', selectedLexicon, isPrivate],
+    queryKey: ['data-debugger', selectedLexicon, isPrivate, repoDid],
     queryFn: async () => {
       if (!selectedLexicon) {
         return null
       }
       
-      const client = new HabitatClient(getUserDid(), getDefaultAgent())
+      // Use the repo DID if provided, otherwise undefined (uses default)
+      const repo = repoDid.trim() || undefined
       
       if (isPrivate) {
-        return await client.listPrivateRecords(selectedLexicon)
+        return await client.listPrivateRecords(selectedLexicon, undefined, undefined, repo)
       } else {
-        return await client.listRecords(selectedLexicon)
+        return await client.listRecords(selectedLexicon, undefined, undefined, repo)
       }
     },
     enabled: !!selectedLexicon,
@@ -112,42 +115,60 @@ function DataDebugger({ lexicons }: DataDebuggerProps) {
 
       {/* Top bar with controls */}
       <div className="mb-6 p-6 bg-white dark:bg-gray-800 rounded-lg border border-gray-300 dark:border-gray-600 shadow-sm">
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          {/* Lexicon Dropdown */}
-          <div className="flex items-center gap-3 w-full md:w-auto">
-            <label htmlFor="lexicon" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
-              Lexicon:
-            </label>
-            <select
-              id="lexicon"
-              value={selectedLexicon}
-              onChange={(e) => setSelectedLexicon(e.target.value)}
-              className="flex-1 md:w-64 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="">Select a lexicon...</option>
-              {lexicons.map((lexicon) => (
-                <option key={lexicon} value={lexicon}>
-                  {lexicon}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div className="flex flex-col gap-4">
+          {/* First row: Lexicon, DID, and Privacy */}
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            {/* Lexicon Dropdown */}
+            <div className="flex items-center gap-3 w-full md:w-auto">
+              <label htmlFor="lexicon" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                Lexicon:
+              </label>
+              <select
+                id="lexicon"
+                value={selectedLexicon}
+                onChange={(e) => setSelectedLexicon(e.target.value)}
+                className="flex-1 md:w-64 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="">Select a lexicon...</option>
+                {lexicons.map((lexicon) => (
+                  <option key={lexicon} value={lexicon}>
+                    {lexicon}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Privacy Checkbox */}
-          <div className="flex items-center">
-            <label className="flex items-center space-x-2 cursor-pointer">
+            {/* Repo DID Input */}
+            <div className="flex items-center gap-3 w-full md:flex-1">
+              <label htmlFor="repoDid" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
+                DID:
+              </label>
               <input
-                type="checkbox"
-                checked={isPrivate}
-                onChange={(e) => setIsPrivate(e.target.checked)}
-                className="w-4 h-4 text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
+                id="repoDid"
+                type="text"
+                value={repoDid}
+                onChange={(e) => setRepoDid(e.target.value)}
+                placeholder="Optional: did:plc:... (leave empty for your own)"
+                className="flex-1 px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm"
               />
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Private Data</span>
-            </label>
+            </div>
+
+            {/* Privacy Checkbox */}
+            <div className="flex items-center">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isPrivate}
+                  onChange={(e) => setIsPrivate(e.target.checked)}
+                  className="w-4 h-4 text-blue-500 border-gray-300 dark:border-gray-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">Private Data</span>
+              </label>
+            </div>
           </div>
 
-          {/* Filter Input */}
-          <div className="flex items-center gap-3 w-full md:flex-1">
+          {/* Second row: Filter Input */}
+          <div className="flex items-center gap-3 w-full">
             <label htmlFor="filter" className="text-sm font-medium text-gray-700 dark:text-gray-300 whitespace-nowrap">
               Filter:
             </label>
@@ -219,10 +240,22 @@ function DataDebugger({ lexicons }: DataDebuggerProps) {
         {data && !isLoading && selectedLexicon && (
           <>
             <div className="flex justify-between items-center mb-4">
-              <p className="text-gray-600 dark:text-gray-400">
-                {filteredRecords.length} of {data.records?.length || 0} record(s)
-                {Object.keys(parsedFilters).length > 0 && ' (filtered)'}
-              </p>
+              <div className="flex flex-col gap-1">
+                <p className="text-gray-600 dark:text-gray-400">
+                  {filteredRecords.length} of {data.records?.length || 0} record(s)
+                  {Object.keys(parsedFilters).length > 0 && ' (filtered)'}
+                </p>
+                {repoDid.trim() && (
+                  <p className="text-xs text-blue-600 dark:text-blue-400 font-mono">
+                    Querying: {repoDid.trim()}
+                  </p>
+                )}
+                {!repoDid.trim() && (
+                  <p className="text-xs text-gray-500 dark:text-gray-500">
+                    Querying: Your own repo
+                  </p>
+                )}
+              </div>
               <button
                 onClick={() => refetch()}
                 className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 underline text-sm"
