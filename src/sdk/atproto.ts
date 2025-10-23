@@ -12,7 +12,7 @@ export interface CreateRecordResponse {
 export interface GetRecordResponse<T = Record<string, unknown>> {
     uri: string;
     cid?: string;
-    value: T;
+    record: T;
 }
 
 export interface ListRecordsResponse<T = Record<string, unknown>> {
@@ -179,7 +179,7 @@ export class HabitatClient {
         return {
             uri: response.data.uri,
             cid: response.data.cid,
-            value: response.data.value as T,
+            record: response.data.value as T,
         };
     }
 
