@@ -189,27 +189,39 @@ export class HabitatClient {
         cursor?: string,
         repo?: string,
         opts?: ComAtprotoRepoListRecords.CallOptions,
+        all: boolean = false,
     ): Promise<ListRecordsResponse<T>> {
         // Determine which repo to query (default to user's own repo)
         const targetRepo = repo ?? this.defaultDid;
         
         // Get the appropriate agent for this repo's PDS
         const agent = await this.getAgentForDid(targetRepo);
-        
-        const response = await agent.com.atproto.repo.listRecords({
-            repo: targetRepo,
-            collection,
-            limit,
-            cursor,
-        }, opts);
+
+        let allRecords: Array<{uri: string; cid: string; value: T}> = [];
+        let currentCursor = cursor;
+
+        do {
+            const response = await agent.com.atproto.repo.listRecords({
+                repo: targetRepo,
+                collection,
+                limit,
+                cursor: currentCursor,
+            }, opts);
+
+            allRecords = allRecords.concat(
+                response.data.records.map(record => ({
+                    uri: record.uri,
+                    cid: record.cid,
+                    value: record.value as T,
+                }))
+            );
+
+            currentCursor = response.data.cursor;
+        } while (all && currentCursor);
         
         return {
-            records: response.data.records.map(record => ({
-                uri: record.uri,
-                cid: record.cid,
-                value: record.value as T,
-            })),
-            cursor: response.data.cursor,
+            records: allRecords,
+            cursor: currentCursor,
         };
     }
 
