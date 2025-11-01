@@ -156,6 +156,26 @@ export class HabitatClient {
         };
     }
 
+    async putRecord<T = Record<string, unknown>>(
+        collection: string,
+        record: T,
+        rkey: string,
+        opts?: ComAtprotoRepoCreateRecord.CallOptions,
+    ): Promise<CreateRecordResponse> {
+        // Putting records always happens on the user's own repo
+        const response = await this.defaultAgent.com.atproto.repo.putRecord({
+            repo: this.defaultDid,
+            collection,
+            record: record as Record<string, unknown>,
+            rkey,
+        }, opts);
+        
+        return {
+            uri: response.data.uri,
+            cid: response.data.cid,
+        };
+    }
+
     async getRecord<T = Record<string, unknown>>(
         collection: string,
         rkey: string,
